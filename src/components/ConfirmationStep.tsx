@@ -34,6 +34,7 @@ import { CreditLineSummaryBlock } from "@/components/CreditLineSummaryBlock";
 import { PendingButton } from "@/components/PendingButton";
 import { formatMoney } from "@/utils/amountValidation";
 import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
+import { projectDraw } from "@/lib/draw-projection";
 import { getRiskEducationState, RISK_EDUCATION_VERSION } from "@/state/riskEducation";
 import { useWalletIdentityKey } from "@/hooks/useWalletIdentityKey";
 import { useEffect } from "react";
@@ -181,9 +182,9 @@ export function ConfirmationStep({
   /** Controls the "How is my APR calculated?" collapsible section. */
   const [aprDisclosureOpen, setAprDisclosureOpen] = useState(false);
 
-  const utilizedBalance = creditLine.limit - creditLine.available;
   const safeAmount = Math.max(Number.isFinite(amount) ? amount : 0, 0);
 
+  const quote = getDrawPricingQuote(creditLine, safeAmount);
   const {
     fee,
     apr,
@@ -192,7 +193,7 @@ export function ConfirmationStep({
     termMonths,
     utilizationAdjustmentLabel,
     termAdjustmentLabel,
-  } = getDrawPricingQuote(creditLine, safeAmount);
+  } = quote;
 
   // Reconstruct the base APR before adjustments for the disclosure panel.
   const utilizationAdjPts =
@@ -204,9 +205,14 @@ export function ConfirmationStep({
   const termAdjPts = termMonths > 24 ? 2.5 : termMonths > 12 ? 1.5 : 0.5;
   const baseApr = Math.round((apr - utilizationAdjPts - termAdjPts) * 100) / 100;
 
-  const newBalance = utilizedBalance + safeAmount + fee;
-  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
-  const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
+  const projection = projectDraw(
+    creditLine,
+    safeAmount,
+    quote,
+  );
+  const newBalance = projection.newBalance;
+  const remainingAvailable = projection.remainingAvailable;
+  const newUtilization = projection.newUtilizationPct;
   const currentUtilizationPct = creditLine.utilization;
 
   const riskBandMeta = getRiskBandMeta(riskBand);
@@ -310,6 +316,7 @@ export function ConfirmationStep({
             <dd className="mt-1 font-semibold text-foreground tabular-nums" data-testid="new-balance-display">
               {formatMoney(newBalance)}
             </dd>
+            <p className="mt-1 text-xs text-muted">Includes 1% fee ({formatMoney(fee)})</p>
           </div>
 
           <div className="rounded-lg border border-border bg-background/60 p-3">

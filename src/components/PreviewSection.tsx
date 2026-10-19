@@ -19,6 +19,8 @@
  */
 
 import { CreditLine } from "@/types/draw-credit.types";
+import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
+import { projectDraw } from "@/lib/draw-projection";
 import { DollarSign, TrendingUp } from "lucide-react";
 
 interface PreviewSectionProps {
@@ -27,10 +29,12 @@ interface PreviewSectionProps {
 }
 
 export function PreviewSection({ creditLine, amount }: PreviewSectionProps) {
-  const newUtilization = Math.round(
-    ((creditLine.limit - creditLine.available + amount) / creditLine.limit) *
-      100,
+  const projection = projectDraw(
+    creditLine,
+    amount,
+    getDrawPricingQuote(creditLine, amount),
   );
+  const newUtilization = projection.newUtilizationPct;
   const isHighAfterDraw = newUtilization > 80;
 
   return (

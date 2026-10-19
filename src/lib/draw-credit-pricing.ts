@@ -10,6 +10,12 @@ export interface DrawPricingQuote {
   termAdjustmentLabel: string;
 }
 
+/** Return the one-time draw fee using integer cents arithmetic. */
+export function getDrawFee(amount: number): number {
+  const amountCents = Math.max(Math.round(amount * 100), 0);
+  return Math.round(amountCents / 100) / 100;
+}
+
 const BASE_APR_BY_RISK_BAND: Record<DrawPricingRiskBand, number> = {
   Prime: 7.5,
   Standard: 9.5,
@@ -52,7 +58,7 @@ export function getDrawPricingQuote(
   amount: number,
 ): DrawPricingQuote {
   const safeAmount = Math.max(amount, 0);
-  const fee = safeAmount > 0 ? Math.round(safeAmount * 0.01 * 100) / 100 : 0;
+  const fee = getDrawFee(safeAmount);
   const utilizationAdjustment = getUtilizationAdjustment(
     creditLine.utilization,
   );
