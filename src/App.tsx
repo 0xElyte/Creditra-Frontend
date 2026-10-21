@@ -15,6 +15,7 @@ import { WalletReconnectBanner } from "./components/WalletReconnectBanner";
 import { NetworkMismatchBanner } from "./components/notifications/NetworkMismatchBanner";
 import { Header } from "./layouts/Header";
 import { Skeleton } from "./components/Skeleton";
+import { isEditableTarget } from "./utils/isEditableTarget";
 
 import { ROUTE_MANIFEST } from "./routes/manifest";
 
@@ -33,17 +34,6 @@ function RouteLoadingFallback() {
     </div>
   );
 }
-
-const isEditableTarget = (target: EventTarget | null) => {
-  if (!(target instanceof HTMLElement)) return false;
-  const tagName = target.tagName.toLowerCase();
-  return (
-    target.isContentEditable ||
-    tagName === "input" ||
-    tagName === "textarea" ||
-    tagName === "select"
-  );
-};
 
 /**
  * Application root.
