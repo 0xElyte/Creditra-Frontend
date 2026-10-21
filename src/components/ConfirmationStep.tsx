@@ -188,6 +188,8 @@ export function ConfirmationStep({
   const {
     fee,
     apr,
+    baseApr,
+    adjustments,
     estimatedMonthlyInterest,
     riskBand,
     termMonths,
@@ -213,6 +215,11 @@ export function ConfirmationStep({
   const newBalance = projection.newBalance;
   const remainingAvailable = projection.remainingAvailable;
   const newUtilization = projection.newUtilizationPct;
+  } = getDrawPricingQuote(creditLine, safeAmount);
+
+  const newBalance = utilizedBalance + safeAmount + fee;
+  const remainingAvailable = Math.max(creditLine.limit - newBalance, 0);
+  const newUtilization = Math.round((newBalance / creditLine.limit) * 100);
   const currentUtilizationPct = creditLine.utilization;
 
   const riskBandMeta = getRiskBandMeta(riskBand);
@@ -356,8 +363,8 @@ export function ConfirmationStep({
             >
               <p className="text-muted text-xs">
                 Your APR is composed of a base rate for your risk band, plus
-                adjustments for your current utilization level and the draw
-                term length.
+                adjustments for the utilization this draw leaves you at and the
+                draw term length.
               </p>
               <dl className="space-y-2">
                 <div className="flex justify-between gap-4">
@@ -368,18 +375,17 @@ export function ConfirmationStep({
                     {baseApr}%
                   </dd>
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted">{utilizationAdjustmentLabel}</dt>
-                  <dd className="font-semibold text-foreground tabular-nums" data-testid="apr-utilization-adj">
-                    +{utilizationAdjPts}%
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted">{termAdjustmentLabel}</dt>
-                  <dd className="font-semibold text-foreground tabular-nums" data-testid="apr-term-adj">
-                    +{termAdjPts}%
-                  </dd>
-                </div>
+                {adjustments.map((adjustment) => (
+                  <div key={adjustment.kind} className="flex justify-between gap-4">
+                    <dt className="text-muted">{adjustment.label}</dt>
+                    <dd
+                      className="font-semibold text-foreground tabular-nums"
+                      data-testid={`apr-${adjustment.kind}-adj`}
+                    >
+                      +{adjustment.points}%
+                    </dd>
+                  </div>
+                ))}
                 <div className="flex justify-between gap-4 border-t border-border pt-2">
                   <dt className="font-semibold text-foreground">Total APR</dt>
                   <dd className="font-bold text-foreground tabular-nums" data-testid="apr-total">

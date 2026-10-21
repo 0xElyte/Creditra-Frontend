@@ -26,6 +26,11 @@
 import { CreditLine, DrawStep } from "@/types/draw-credit.types";
 import { getDrawPricingQuote } from "@/lib/draw-credit-pricing";
 import { projectDraw } from "@/lib/draw-projection";
+import {
+  DrawPricingTierHint,
+  getDrawPricingQuote,
+  getNextAprTier,
+} from "@/lib/draw-credit-pricing";
 import { formatMoney } from "@/utils/amountValidation";
 import { useDebounceValue } from "@/hooks/useDebounceValue";
 import { useScrollCollapse } from "@/hooks/useScrollCollapse";
@@ -44,8 +49,15 @@ function buildAnnouncement(
   lineName: string,
   amountText: string,
   apr: number,
+  nextTier: DrawPricingTierHint | null,
 ): string {
-  return `Draw summary: ${lineName}, ${amountText} draw amount, ${apr} percent APR.`;
+  const summary = `Draw summary: ${lineName}, ${amountText} draw amount, ${apr} percent APR.`;
+
+  if (!nextTier) {
+    return summary;
+  }
+
+  return `${summary} APR increases to ${nextTier.apr}% above ${formatMoney(nextTier.aboveAmount)}.`;
 }
 
 function computeSummary(
